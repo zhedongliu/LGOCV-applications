@@ -1,8 +1,8 @@
-### load script to build the mesh
-system.time(source('us_mesh.R'))
-
 ### load script to get the data
 system.time(source('us_get_tmax1day.R'))
+
+### load script to build the mesh
+system.time(source('us_mesh.R'))
 
 ### summary of the data
 ls()
@@ -84,37 +84,36 @@ c(-sum(log(fit$po$po), na.rm=TRUE),
 summary(sapply(gcpo5$groups, function(x) length(x$idx)))
 summary(sapply(gcpo20$groups, function(x) length(x$idx)))
 
-### plot the neighbors for some data points
-ce <- coordinates(tmax1day) ## location coordinates
-if(FALSE) { ### locate some points in the map
+### locate some points in the map
+if(FALSE) { 
     ll <- locator()
-    idsel <- sapply(1:length(ll[[1]]), function(i) 
-        which.min(((ce[,1]-ll$x[i])^2 +
-                   (ce[,2]-ll$y[i])^2)))
-    idsel
+    isel <- sapply(1:length(ll[[1]]), function(i) 
+        which.min(sqrt((locs[,1]-ll$x[i])^2 +
+                   (locs[,2]-ll$y[i])^2)))
+    isel <- sort(isel)
+    isel
 } else { ## selected points to look at
-    isel <- c(774, 962, 992, 1714, 2376, 2429, 2520, 3252, 3338, 3910, 4378, 4596, 5103)
+    isel <- c(239, 1078, 1686, 1858, 2504, 2621, 3305, 3392, 3910, 3979, 4023, 5195, 5421)
 }
 
 ### number of neighbors (with m=10) at the selected data locations
 nnb <- sapply(gcpo20$groups[isel], function(x) length(x$idx)-1)
 nnb
 
+### plot the neighbors for some data points
 par(mfrow=c(1,1), mar=c(0,0,0,0))
 image.plot(
     x=grid.proj$x,
     y=grid.proj$y,
     z=y.m+fit$summary.fix$mean[1], asp=1)
 plot(map.moll, add=TRUE, border=gray(0.3,0.5))
-points(tmax1day, cex=0.5, pch=8)
+points(tmax1day, locsx=0.5, pch=8)
 for(i in isel) {
-    segments(ce[i, 1], ce[i, 2],
-             ce[gcpo20$groups[[i]]$idx[-1], 1],
-             ce[gcpo20$groups[[i]]$idx[-1], 2])
-    points(tmax1day[gcpo20$groups[[i]]$idx, ],
-           pch=19, cex=1, col='white')
+    jj <- gcpo20$groups[[i]]$idx[-1]
+    segments(locs[i, 1], locs[i, 2], locs[jj, 1], locs[jj, 2])
+    points(locs[jj, ], pch=19, cex=1, col='white')
 }
-points(tmax1day[isel, ], pch=19, cex=3, col='white')
-text(ce[isel, 1], ce[isel, 2], paste(nnb), col='blue3')
+points(locs[isel, ], pch=19, cex=3, col='white')
+text(locs[isel, 1], locs[isel, 2], paste(nnb), col='blue3')
 
 

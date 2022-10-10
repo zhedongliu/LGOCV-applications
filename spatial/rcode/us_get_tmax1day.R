@@ -157,3 +157,7 @@ if(plotting) {
     save(list='tmax1day', file='tmax1day.RData')
 
 }
+
+## location coordinates
+library(sp)
+locs <- coordinates(tmax1day) 

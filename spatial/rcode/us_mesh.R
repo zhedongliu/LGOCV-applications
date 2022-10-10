@@ -16,16 +16,13 @@ proj4string(map.sp) <- "+proj=longlat +datum=WGS84"
 ### to mollweide projection
 map.moll <- spTransform(map.sp, '+proj=moll +units=km') 
 
-### define a boundary from US map
-bound <- inla.sp2segment(map.moll)
-
 ### build a mesh on the US boundary
 mesh <- inla.mesh.2d(
-    boundary=bound,
-    max.edge=c(100, 200),
-    offset=c(50, 300),
-    cutoff=50,
-    n=25,
+    loc=locs, 
+    max.edge=300, 
+    offset=250, 
+    cutoff=30,
+###    n=25,
     min.angle=25)
 mesh$n
 
