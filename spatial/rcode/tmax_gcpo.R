@@ -107,13 +107,13 @@ image.plot(
     y=grid.proj$y,
     z=y.m+fit$summary.fix$mean[1], asp=1)
 plot(map.moll, add=TRUE, border=gray(0.3,0.5))
-points(tmax1day, locsx=0.5, pch=8)
+points(tmax1day, cex=0.5, pch=8)
 for(i in isel) {
     jj <- gcpo20$groups[[i]]$idx[-1]
     segments(locs[i, 1], locs[i, 2], locs[jj, 1], locs[jj, 2])
     points(locs[jj, ], pch=19, cex=1, col='white')
 }
-points(locs[isel, ], pch=19, cex=3, col='white')
-text(locs[isel, 1], locs[isel, 2], paste(nnb), col='blue3')
+points(locs[isel, ], pch=19, cex=2, col='white')
+text(locs[isel, 1], locs[isel, 2], paste(nnb), col='blue3', cex=.8)
 
 
