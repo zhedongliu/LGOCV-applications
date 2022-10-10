@@ -85,12 +85,20 @@ summary(sapply(gcpo5$groups, function(x) length(x$idx)))
 summary(sapply(gcpo20$groups, function(x) length(x$idx)))
 
 ### plot the neighbors for some data points
-isel <- c(774, 962, 992, 1714, 2376, 2429, 2520, 3252, 3338, 4378, 4596, 5103)
+ce <- coordinates(tmax1day) ## location coordinates
+if(FALSE) { ### locate some points in the map
+    ll <- locator()
+    idsel <- sapply(1:length(ll[[1]]), function(i) 
+        which.min(((ce[,1]-ll$x[i])^2 +
+                   (ce[,2]-ll$y[i])^2)))
+    idsel
+} else { ## selected points to look at
+    isel <- c(774, 962, 992, 1714, 2376, 2429, 2520, 3252, 3338, 3910, 4378, 4596, 5103)
+}
 
 ### number of neighbors (with m=10) at the selected data locations
 nnb <- sapply(gcpo20$groups[isel], function(x) length(x$idx)-1)
 nnb
-ce <- coordinates(tmax1day)
 
 par(mfrow=c(1,1), mar=c(0,0,0,0))
 image.plot(
