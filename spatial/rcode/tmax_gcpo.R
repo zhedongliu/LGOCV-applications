@@ -85,10 +85,11 @@ summary(sapply(gcpo5$groups, function(x) length(x$idx)))
 summary(sapply(gcpo20$groups, function(x) length(x$idx)))
 
 ### plot the neighbors for some data points
-isel <- c(774, 992, 1714, 2376, 2520, 3252, 3338, 4378, 4596, 5103)
+isel <- c(774, 962, 992, 1714, 2376, 2429, 2520, 3252, 3338, 4378, 4596, 5103)
 
 ### number of neighbors (with m=10) at the selected data locations
-sapply(gcpo20$groups[isel], function(x) length(x$idx)-1)
+nnb <- sapply(gcpo20$groups[isel], function(x) length(x$idx)-1)
+nnb
 ce <- coordinates(tmax1day)
 
 par(mfrow=c(1,1), mar=c(0,0,0,0))
@@ -98,10 +99,14 @@ image.plot(
     z=y.m+fit$summary.fix$mean[1], asp=1)
 plot(map.moll, add=TRUE, border=gray(0.3,0.5))
 points(tmax1day, cex=0.5, pch=8)
-for(i in isel)
+for(i in isel) {
     segments(ce[i, 1], ce[i, 2],
              ce[gcpo20$groups[[i]]$idx[-1], 1],
              ce[gcpo20$groups[[i]]$idx[-1], 2])
-points(tmax1day[isel, ], pch=19, cex=2, col='white')
+    points(tmax1day[gcpo20$groups[[i]]$idx, ],
+           pch=19, cex=1, col='white')
+}
+points(tmax1day[isel, ], pch=19, cex=3, col='white')
+text(ce[isel, 1], ce[isel, 2], paste(nnb), col='blue3')
 
 
