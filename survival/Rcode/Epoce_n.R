@@ -59,6 +59,7 @@ modINLA = inla(formula = formJoint, data=dataINLA, family=c("gaussian", "weibull
                 control.family=list(list(), list(variant=1)),
                control.inla = list(int.strategy="eb"),
                control.fixed=list(mean=0, prec=0.01, mean.intercept=0, prec.intercept=0.01))
+
 summary(modINLA)
 
 

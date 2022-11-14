@@ -1,0 +1,136 @@
+---
+title: "Utility Functions for Competing Risk"
+author: "zhedong liu"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+bibliography: references.bib  
+---
+
+# Generation Model
+Assume we will observe $(T,\delta),$ where $T$ is the occurance time, $\delta$ is the event type, $\delta = 1,\dots J$ and
+$$T = min(T_1,\dots,T_J).$$ We describe $T_{\delta}$ using pdf $\pi(T_{\delta} = t)$, then its cdf $P(T_{\delta}<t)$, survival function $P(T_{\delta}>t)$ and hazard function $h(T_{\delta}=t) = \frac{\pi(T_{\delta} = t)}{P(T_{\delta}>t)}$ are defined. We assume the underlining processes $T_{\delta}$ are independent.
+
+The probability of not experiencing any event before $s$ is 
+$$P(T > s) = \prod_{k = 1}^{J} P(T_k > s).$$
+
+The density of $j$th event happens at time $t$ is
+$$\pi(T=t,\delta=j) =\pi(T_j = t)\prod_{k \neq j} P(T_k>t).$$
+In prediction points of view, the density of $j$th event happens at time $t$ given nothing happening before time $s$ is more interesting, which is
+\begin{equation*}
+\pi(T=t,\delta=j|T>s) = \frac{\pi(T_j = t)\prod_{k \neq j} P(T_k>t)}{P(T > s)}.
+\end{equation*}
+
+The density of observing an event at $t$ is
+$$\pi(T=t) = \sum_{j = 1}^J\pi(T_j = t)\prod_{k \neq j} P(T_k>t).$$ 
+The conditional density of observing an event at $t$ given nothing happening before time $s$ is 
+\begin{equation}
+\label{nextevent}
+\pi(T=t|T>s) = \frac{\sum_{j = 1}^J\pi(T_j = t)\prod_{k \neq j} P(T_k>t)}{P(T > s)}
+\end{equation}
+
+
+
+
+We would also happy to know
+$$P(\delta = j) = \int_{0}^{\infty} \pi(T_j = t)\prod_{k \neq j} P(T_k>t) dt.$$ This will correspond to the relative frequency of each events. 
+
+The conditional version is 
+\begin{equation}
+\label{risk_for_each_event}
+P(\delta = j|T>s) = \frac{\int_{s}^{\infty} \pi(T_j = t)\prod_{k \neq j} P(T_k>t) dt}{P(T > s)}.
+\end{equation}
+
+
+People are particularly interest in the probability of experiencing $j$th event within a time interval (s,s+t] given the whole information accumulated till the landmark time $s$. The probability is
+\begin{equation}
+\label{risk_for_each_event_in_some_periord}
+P(T < s+t,\delta = j | T > s) = \frac{\int^{s+t}_{s} \pi(T = x,\delta = j)dx}{P(T > s)}.
+\end{equation}
+
+
+To summerise, the conditional version is more general since we simply set $s = 0$ to get the unconditional version. The above probability can be checked using data.
+
+# Fitted Model
+Now we have our fitted model, 
+$$\pi(T_j|\boldsymbol{D}),$$ where $\boldsymbol{D}$ represents observed data. Thus all the above quantity can be derived.
+
+We want to check how good is the model. 
+
+# Prediction Tasks
+There are some potentially interesting questions related to prediction:
+
+1. When will the next event (whatever event) happen given no event has happened yet?
+
+ With probability $.95$, we can observe a event happen before $t$, where $P(T < s+t| T > s)  = 0.95$. (\ref{nextevent})
+
+2. What's the next event happen given no event has happened yet? 
+
+ The most likely happened event is $\delta = j$ which maximize $P(\delta = j| T > s)$. (\ref{risk_for_each_event})
+
+3. Will event $j$ happen within $t$ unit of time given no event has happened yet? 
+
+ The probability that $j$ will happen within $t$ unit of time is $P(T < s+t,\delta = j | T > s)$. (\ref{risk_for_each_event_in_some_periord})
+
+4. When will event $j$ happen given no event has happened yet? 
+
+ With probability $P(\delta \neq j| T>s) = 1-P(\delta = j| T > s)$, $j$ will not happen. (\ref{risk_for_each_event})
+ 
+ With probability $.95*P(\delta = j| T>s)$, we can observe $j$ happens before $t$, where $P(T < s+t, \delta = j| T > s)  = .95*P(\delta = j| T>s)$. (\ref{risk_for_each_event_in_some_periord})
+
+# Scores
+
+
+It seems question 2 - 4 are more interesting. We may focus on compute scores to check (\ref{risk_for_each_event}) and (\ref{risk_for_each_event_in_some_periord}).
+
+## Brier Score
+
+We have observed $(T_1,\delta_1), \dots (T_n,\delta_n)$. 
+
+We compute $$S_{B}(s) = \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(\delta = \delta_i|T>s,\boldsymbol{D}) - \boldsymbol{1}_{\delta_i=j})^2$$ to check (\ref{risk_for_each_event}). This is Brier score.
+
+We compute $$S_{B}(s,t) = \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(T_i \leq s+t,\delta = \delta_i|T>s,\boldsymbol{D}) - \boldsymbol{1}_{T_i \leq s+t,\delta_i=j})^2$$ to check (\ref{risk_for_each_event_in_some_periord}). This is anther Brier score. (@blanche2015quantifying)
+
+
+## Logarithmic Score
+
+We compute $$S_{L}(s) = \frac{1}{n(s)} \sum_{i = 1}^n \boldsymbol{1}_{T_i>s} \log{\pi(T=T_i,\delta=\delta_i|T>s,\boldsymbol{D})}$$ to check (\ref{risk_for_each_event_in_some_periord}). This is logarithmic scores or expected cross-entropy, which can check (\ref{risk_for_each_event_in_some_periord}) indirectly. (@commenges2012choice)
+
+## Receiver Operating Characteristic Curve and Area Under the Curve
+
+We predict an individual will encounter $j$ within a time interval $(s,s+t]$ when $P(T < s+t,\delta = j | T > s,\boldsymbol{D}) > c$, $\tilde{P} > c$ in short. $\tilde{P}$ is different for each $i$ because of the covariates.
+
+We have the true positive counts,
+$$TP_{s,t}(c) = \sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P}>c},$$
+false positive counts,
+$$FP_{s,t}(c) =\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P}>c},$$
+true negative counts,
+$$TN_{s,t}(c) = \sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P} \leq c},$$
+and false negative counts
+$$FN_{s,t}(c) = \sum_{i = 1}^n\boldsymbol{1}_{s<T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P} \leq c}.$$
+
+Then the true positive rate, or sensitivity, is 
+$$TPR_{s,t}(c) = \frac{TP_{s,t}(c)}{TP_{s,t}(c)+FN_{s,t}(c)} = \frac{\sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P}>c}}{\sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}},$$
+and the false positive rate, or specificity, is 
+$$FPR_{s,t}(c) = \frac{FP_{s,t}(c)}{FP_{s,t}(c)+TN_{s,t}(c)} = \frac{\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P}>c}}{\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}}.$$
+Then the receiver operating characteristic curve (ROC) is defined by $$ROC_{s,t}(p) = TPR_{s,t}(FPR^{-1}_{s,t}(p)),$$
+and the area under the receiver operating characteristic curve (AUC) is $$S_{AUC}(s,t) = \int_{0}^1 ROC_{s,t}(p)dp.$$ Using Bamber’s Equivalence theorem, we can compute Wilcoxon statistic, equivalent to AUC,
+$$S_{AUC}(s,t) = \frac{1}{K_1K_2}\sum_{i_1=1}^{K_1}\sum_{i_2=1}^{K_2} \boldsymbol{1}_{\tilde{P}_{i_1} > \tilde{P}_{i_2}},$$
+where $i_1$ are those $s<T_{i_1}<s+t,\delta_{i_1} = j$ and $i_2$ are the compliments.
+
+@blanche2015quantifying considers decision about if subject $i_1$ has higher risk than $i_2$. That is 
+$$S_{AUCb}(s,t) = \frac{\sum_{i_1=1}^n\sum_{i_2=1}^n\boldsymbol{1}_{\tilde{P}_{i_1}>\tilde{P}_{i_2}}\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}{\sum_{i_1 = 1}^n\sum_{i_2=1}^n\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}.$$
+
+
+# Cross Validation
+We use cross validation to estimate those scores because we don't have future data. Leave-group-out cross-validation (LGOCV) will be involved when we have longitudinal data jointly modeled with our survival data depending on the definition of current time.
+
+$$S_{B}(s,t) \approx \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(T_i \leq s+t,\delta = \delta_i|T>s,\boldsymbol{D}_{-I_i}) - \boldsymbol{1}_{T_i \leq s+t,\delta_i=j})^2$$
+
+ $$S_{L}(s) \approx \frac{1}{n(s)} \sum_{i = 1}^n \boldsymbol{1}_{T_i>s} \log{\pi(T=T_i,\delta=\delta_i|T>s,\boldsymbol{D}_{-I_i})}$$
+ $$S_{AUC}(s,t) = \frac{1}{K_1K_2}\sum_{i_1=1}^{K_1}\sum_{i_2=1}^{K_2} \boldsymbol{1}_{\tilde{P}_{i_1}|\boldsymbol{D_{-i_1}} > \tilde{P}_{i_2}|\boldsymbol{D_{-i_2}}}$$
+$$S_{AUCb}(s,t) = \frac{\sum_{i_1=1}^n\sum_{i_2=1}^n\boldsymbol{1}_{\tilde{P}_{i_1}|\boldsymbol{D_{-i_1}}>\tilde{P}_{i_2}|\boldsymbol{D_{-i_2}}}\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}{\sum_{i_1 = 1}^n\sum_{i_2=1}^n\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}.$$
+
+# References
+
