@@ -8,9 +8,12 @@ output:
 bibliography: references.bib  
 ---
 
-# Generation Model
-Assume we will observe $(T,\delta),$ where $T$ is the occurance time, $\delta$ is the event type, $\delta = 1,\dots J$ and
-$$T = min(T_1,\dots,T_J).$$ We describe $T_{\delta}$ using pdf $\pi(T_{\delta} = t)$, then its cdf $P(T_{\delta}<t)$, survival function $P(T_{\delta}>t)$ and hazard function $h(T_{\delta}=t) = \frac{\pi(T_{\delta} = t)}{P(T_{\delta}>t)}$ are defined. We assume the underlining processes $T_{\delta}$ are independent.
+# Model
+
+We observe $\boldsymbol{D} = (t_i,\delta_i),$ where $t_i$ is the occurrence time of a event, $\delta_i$ is the event type of individual $i$, where $\delta_i = 1,\dots J$ and $i = 1, \dots n$. If only one event can happen, we can use a competing risk model to model this data.
+
+
+We define $t_i$ is a realization of the random variable $T_i$ and $\delta_i$ is a realization of the random variable $Z_i$. For clarity, in this section we drop the notation $i$. We define $T = \min(T|Z=1 ,\dots, T|Z = J)$ and $Z = \underset{\delta}{\arg\min}(T|Z =\delta)$, and $T|Z =j$ being the random variable describing 
 
 The probability of not experiencing any event before $s$ is 
 $$P(T > s) = \prod_{k = 1}^{J} P(T_k > s).$$
@@ -52,12 +55,6 @@ P(T < s+t,\delta = j | T > s) = \frac{\int^{s+t}_{s} \pi(T = x,\delta = j)dx}{P(
 
 To summerise, the conditional version is more general since we simply set $s = 0$ to get the unconditional version. The above probability can be checked using data.
 
-# Fitted Model
-Now we have our fitted model, 
-$$\pi(T_j|\boldsymbol{D}),$$ where $\boldsymbol{D}$ represents observed data. Thus all the above quantity can be derived.
-
-We want to check how good is the model. 
-
 # Prediction Tasks
 There are some potentially interesting questions related to prediction:
 
@@ -88,9 +85,9 @@ It seems question 2 - 4 are more interesting. We may focus on compute scores to 
 
 We have observed $(T_1,\delta_1), \dots (T_n,\delta_n)$. 
 
-We compute $$S_{B}(s) = \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(\delta = \delta_i|T>s,\boldsymbol{D}) - \boldsymbol{1}_{\delta_i=j})^2$$ to check (\ref{risk_for_each_event}). This is Brier score.
+We compute $$S_{B}(s) = \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(\delta = j|T>s,\boldsymbol{D}) - \boldsymbol{1}_{\delta_i=j})^2$$ to check (\ref{risk_for_each_event}). This is Brier score.
 
-We compute $$S_{B}(s,t) = \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(T_i \leq s+t,\delta = \delta_i|T>s,\boldsymbol{D}) - \boldsymbol{1}_{T_i \leq s+t,\delta_i=j})^2$$ to check (\ref{risk_for_each_event_in_some_periord}). This is anther Brier score. (@blanche2015quantifying)
+We compute $$S_{B}(s,t) = \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(T \leq s+t,\delta = j|T>s,\boldsymbol{D}) - \boldsymbol{1}_{T_i \leq s+t,\delta_i=j})^2$$ to check (\ref{risk_for_each_event_in_some_periord}). This is Brier score for conditional prediction. (@blanche2015quantifying)
 
 
 ## Logarithmic Score
@@ -102,35 +99,35 @@ We compute $$S_{L}(s) = \frac{1}{n(s)} \sum_{i = 1}^n \boldsymbol{1}_{T_i>s} \lo
 We predict an individual will encounter $j$ within a time interval $(s,s+t]$ when $P(T < s+t,\delta = j | T > s,\boldsymbol{D}) > c$, $\tilde{P} > c$ in short. $\tilde{P}$ is different for each $i$ because of the covariates.
 
 We have the true positive counts,
-$$TP_{s,t}(c) = \sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P}>c},$$
+$$TP_{s,t,j}(c) = \sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P}>c},$$
 false positive counts,
-$$FP_{s,t}(c) =\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P}>c},$$
+$$FP_{s,t,j}(c) =\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P}>c},$$
 true negative counts,
-$$TN_{s,t}(c) = \sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P} \leq c},$$
+$$TN_{s,t,j}(c) = \sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P} \leq c},$$
 and false negative counts
-$$FN_{s,t}(c) = \sum_{i = 1}^n\boldsymbol{1}_{s<T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P} \leq c}.$$
+$$FN_{s,t,j}(c) = \sum_{i = 1}^n\boldsymbol{1}_{s<T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P} \leq c}.$$
 
 Then the true positive rate, or sensitivity, is 
-$$TPR_{s,t}(c) = \frac{TP_{s,t}(c)}{TP_{s,t}(c)+FN_{s,t}(c)} = \frac{\sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P}>c}}{\sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}},$$
+$$TPR_{s,t,j}(c) = \frac{TP_{s,t}(c)}{TP_{s,t}(c)+FN_{s,t}(c)} = \frac{\sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}\boldsymbol{1}_{\tilde{P}>c}}{\sum_{i = 1}^{n}\boldsymbol{1}_{s< T_i \leq s+t,\delta_i = j}},$$
 and the false positive rate, or specificity, is 
-$$FPR_{s,t}(c) = \frac{FP_{s,t}(c)}{FP_{s,t}(c)+TN_{s,t}(c)} = \frac{\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P}>c}}{\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}}.$$
-Then the receiver operating characteristic curve (ROC) is defined by $$ROC_{s,t}(p) = TPR_{s,t}(FPR^{-1}_{s,t}(p)),$$
+$$FPR_{s,t,j}(c) = \frac{FP_{s,t}(c)}{FP_{s,t}(c)+TN_{s,t}(c)} = \frac{\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}\boldsymbol{1}_{\tilde{P}>c}}{\sum_{i = 1}^n \boldsymbol{1}_{s<T_i \leq s+t,\delta_i \neq j \cup T_i>s+t}}.$$
+Then the receiver operating characteristic curve (ROC) is defined by $$ROC_{s,t,j}(p) = TPR_{s,t,j}(FPR^{-1}_{s,t,j}(p)),$$
 and the area under the receiver operating characteristic curve (AUC) is $$S_{AUC}(s,t) = \int_{0}^1 ROC_{s,t}(p)dp.$$ Using Bamber’s Equivalence theorem, we can compute Wilcoxon statistic, equivalent to AUC,
-$$S_{AUC}(s,t) = \frac{1}{K_1K_2}\sum_{i_1=1}^{K_1}\sum_{i_2=1}^{K_2} \boldsymbol{1}_{\tilde{P}_{i_1} > \tilde{P}_{i_2}},$$
+$$S_{AUC}(s,t,j) = \frac{1}{K_1K_2}\sum_{i_1=1}^{K_1}\sum_{i_2=1}^{K_2} \boldsymbol{1}_{\tilde{P}_{i_1} > \tilde{P}_{i_2}},$$
 where $i_1$ are those $s<T_{i_1}<s+t,\delta_{i_1} = j$ and $i_2$ are the compliments.
 
 @blanche2015quantifying considers decision about if subject $i_1$ has higher risk than $i_2$. That is 
-$$S_{AUCb}(s,t) = \frac{\sum_{i_1=1}^n\sum_{i_2=1}^n\boldsymbol{1}_{\tilde{P}_{i_1}>\tilde{P}_{i_2}}\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}{\sum_{i_1 = 1}^n\sum_{i_2=1}^n\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}.$$
+$$S_{AUCb}(s,t,j) = \frac{\sum_{i_1=1}^n\sum_{i_2=1}^n\boldsymbol{1}_{\tilde{P}_{i_1}>\tilde{P}_{i_2}}\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}{\sum_{i_1 = 1}^n\sum_{i_2=1}^n\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}.$$
 
 
 # Cross Validation
 We use cross validation to estimate those scores because we don't have future data. Leave-group-out cross-validation (LGOCV) will be involved when we have longitudinal data jointly modeled with our survival data depending on the definition of current time.
 
-$$S_{B}(s,t) \approx \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(T_i \leq s+t,\delta = \delta_i|T>s,\boldsymbol{D}_{-I_i}) - \boldsymbol{1}_{T_i \leq s+t,\delta_i=j})^2$$
+$$S_{B}(s,t) \approx \frac{1}{n(s)} \sum_{i = 1}^n \sum_{j = 1}^J (P(T \leq s+t,\delta = j|T>s,\boldsymbol{D}_{-I_i}) - \boldsymbol{1}_{T_i \leq s+t,\delta_i=j})^2$$
 
  $$S_{L}(s) \approx \frac{1}{n(s)} \sum_{i = 1}^n \boldsymbol{1}_{T_i>s} \log{\pi(T=T_i,\delta=\delta_i|T>s,\boldsymbol{D}_{-I_i})}$$
- $$S_{AUC}(s,t) = \frac{1}{K_1K_2}\sum_{i_1=1}^{K_1}\sum_{i_2=1}^{K_2} \boldsymbol{1}_{\tilde{P}_{i_1}|\boldsymbol{D_{-i_1}} > \tilde{P}_{i_2}|\boldsymbol{D_{-i_2}}}$$
-$$S_{AUCb}(s,t) = \frac{\sum_{i_1=1}^n\sum_{i_2=1}^n\boldsymbol{1}_{\tilde{P}_{i_1}|\boldsymbol{D_{-i_1}}>\tilde{P}_{i_2}|\boldsymbol{D_{-i_2}}}\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}{\sum_{i_1 = 1}^n\sum_{i_2=1}^n\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}.$$
+ $$S_{AUC}(s,t,j) \approx \frac{1}{K_1K_2}\sum_{i_1=1}^{K_1}\sum_{i_2=1}^{K_2} \boldsymbol{1}_{\tilde{P}_{i_1}|\boldsymbol{D_{-i_1}} > \tilde{P}_{i_2}|\boldsymbol{D_{-i_2}}}$$
+$$S_{AUCb}(s,t,j) \approx \frac{\sum_{i_1=1}^n\sum_{i_2=1}^n\boldsymbol{1}_{\tilde{P}_{i_1}|\boldsymbol{D_{-i_1}}>\tilde{P}_{i_2}|\boldsymbol{D_{-i_2}}}\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}{\sum_{i_1 = 1}^n\sum_{i_2=1}^n\boldsymbol{1}_{s<T_{i_1}<s+t,\delta_{i_1}=j}(1-\boldsymbol{1}_{s<T_{i_2}<s+t,\delta_{i_2}=j})}.$$
 
 # References
 
