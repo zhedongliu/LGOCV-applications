@@ -1,7 +1,7 @@
-#rm(list = ls())
+rm(list = ls())
 library(INLAjoint)
 library(pracma)
-#source("~/r-inla/rinla/R/likelihood.R")
+source("~/r-inla/rinla/R/likelihood.R")
 inla.setOption(pardiso.license="~/.pardiso.lic")
 n_person = 10
 n_each_person = 5
@@ -46,58 +46,6 @@ for(i in 1:n_person){
 eta_longitudinal = .4 + .4*rep(age,each = n_each_person)  + .4*time_longitudinal + rep(ui,each = n_each_person)
 lambda_longitudinal = exp(eta_longitudinal)
 y_longitudinal = rpois(n = nL,lambda = lambda_longitudinal)
-#
-# y_longitudinal = c(y_longitudinal,rep(NA,n_person),rep(NA,n_person),rep(NA,n_person))
-# y_surv1 = inla.surv(time = c(rep(NA,nL),Time,rep(NA,n_person),rep(NA,n_person)),event = c(rep(NA,nL),Event1,rep(NA,n_person),rep(NA,n_person)))
-# y_surv2 = inla.surv(time = c(rep(NA,nL),rep(NA,n_person),Time,rep(NA,n_person)),event = c(rep(NA,nL),rep(NA,n_person),Event2,rep(NA,n_person)))
-# y_surv3 = inla.surv(time = c(rep(NA,nL),rep(NA,n_person),rep(NA,n_person),Time),event = c(rep(NA,nL),rep(NA,n_person),rep(NA,n_person),Event3))
-#
-# id_longitudinal = c(rep(1:n_person,each = n_each_person),rep(NA,n_person),rep(NA,n_person),rep(NA,n_person))
-# id_surv1 = c(rep(NA,nL),1:n_person,rep(NA,n_person),rep(NA,n_person))
-# id_surv2 = c(rep(NA,nL),rep(NA,n_person),1:n_person,rep(NA,n_person))
-# id_surv3 = c(rep(NA,nL),rep(NA,n_person),rep(NA,n_person),1:n_person)
-#
-# age_longitudinal = c(rep(age,each = n_each_person),rep(NA,n_person),rep(NA,n_person),rep(NA,n_person))
-# age_surv1 = c(rep(NA,nL),age,rep(NA,n_person),rep(NA,n_person))
-# age_surv2 = c(rep(NA,nL),rep(NA,n_person),age,rep(NA,n_person))
-# age_surv3 = c(rep(NA,nL),rep(NA,n_person),rep(NA,n_person),age)
-#
-# mu = as.factor(c(rep(1,nL),rep(2,n_person),rep(3,n_person),rep(4,n_person)))
-#
-# time_longitudinal_var = c(time_longitudinal,rep(NA,n_person),rep(NA,n_person),rep(NA,n_person))
-#
-# data_list = list(y = list(y_longitudinal,y_surv1,y_surv2,y_surv3),
-#                  id_longitudinal = id_longitudinal,
-#                  mu = mu,
-#                  time_longitudinal = time_longitudinal_var,
-#                  age_longitudinal = age_longitudinal,
-#                  id_surv1 = id_surv1,
-#                  id_surv2 = id_surv2,
-#                  id_surv3 = id_surv3,
-#                  age_surv1 = age_surv1,
-#                  age_surv2 = age_surv2,
-#                  age_surv3 = age_surv3)
-#
-#
-# hyper_fixed = FALSE
-# hyper_initial = c(theta,theta,theta,0,.1,.2,.3)
-#
-# formula = y ~ -1  + mu +
-#     time_longitudinal +
-#     age_longitudinal + age_surv1 + age_surv2 + age_surv3 +
-#     f(id_longitudinal,model = "iid",hyper = list(theta = list(initial = hyper_initial[4],fixed = hyper_fixed))) +
-#     f(id_surv1,copy = "id_longitudinal",hyper = list(theta = list(initial = hyper_initial[5]))) +
-#     f(id_surv2,copy = "id_longitudinal",hyper = list(theta = list(initial = hyper_initial[6]))) +
-#     f(id_surv3,copy = "id_longitudinal",hyper = list(theta = list(initial = hyper_initial[7])))
-#
-# res = inla(formula,
-#            family = c("poisson","weibullsurv","weibullsurv","weibullsurv"),
-#            data = data_list,
-#            control.family = list(list(),list(variant = 1,initial = hyper_initial[1], fixed = hyper_fixed),list(variant = 1,initial = hyper_initial[2], fixed = hyper_fixed),list(variant = 1,initial = hyper_initial[3], fixed = hyper_fixed)),
-#            inla.mode = "experimental",
-#            verbose = FALSE,
-#            control.compute = list(smtp="pardiso",config = TRUE,likelihood.info = TRUE),
-#            safe = TRUE)
 
 y_surv1 = inla.surv(time = Time,event = Event1)
 y_surv2 = inla.surv(time = Time,event = Event2)
@@ -115,46 +63,45 @@ res <- joint(formLong = y_longitudinal ~ time_longitudinal + age + (1|ID), data=
               dataSurv = SurvDat, assoc=c("SRE_ind", "SRE_ind", "SRE_ind"),
              control=list(likelihood.info = TRUE))
 
+
 friends <- lapply(res$.args$data[[res$id]], function(x) which(res$.args$data[[res$id]]==x))
 individual_data <- lapply(1:n_person, function(x) which(res$.args$data[[res$id]]==x))
+event_num <- length(individual_data[[1]])
 
-res$timeVar
-
-args = list()
-event_num = length(grep("surv", res$.args$family))
-config_idx = 1
-individual_idx = 1 # input of the function
-for(event_idx in 1:event_num){
-  args[[event_idx]] = inla.likelihood.parser(res$misc$configs$config[[config_idx]]$arg.str[which(res$.args$data[[res$id]]==individual_idx)[event_idx]])
-}
-
-sample_i = function(n,args){
-  time_event = vector(mode = "list",length = event_num)
-  for(event_idx in 1:event_num){
-    sampler = inla.likelihood(type = "r",args = args[[event_idx]])
-    time_event[[event_idx]] = sampler(n)
-  }
-  Time = numeric(n)
-  Event = numeric(n)
-  for(sample_idx in 1:n){
-    min_time = Inf
-    for(event_idx in 1:event_num){
-      if(time_event[[event_idx]][sample_idx] < min_time){
-        Event[sample_idx] = event_idx
-        min_time = time_event[[event_idx]][sample_idx]
-      }
-      Time[sample_idx] = min_time
-    }
-  }
-
-  return(list(Time = Time,Event = Event))
-}
-sample_i(1,args)
+# args = list()
+# event_num = length(grep("surv", res$.args$family))
+# config_idx = 1
+# individual_idx = 1 # input of the function
+# for(event_idx in 1:event_num){
+#   args[[event_idx]] = inla.likelihood.parser(res$misc$configs$config[[config_idx]]$arg.str[which(res$.args$data[[res$id]]==individual_idx)[event_idx]])
+# }
+# 
+# sample_i = function(n,args){
+#   time_event = vector(mode = "list",length = event_num)
+#   for(event_idx in 1:event_num){
+#     sampler = inla.likelihood(type = "r",args = args[[event_idx]])
+#     time_event[[event_idx]] = sampler(n)
+#   }
+#   Time = numeric(n)
+#   Event = numeric(n)
+#   for(sample_idx in 1:n){
+#     min_time = Inf
+#     for(event_idx in 1:event_num){
+#       if(time_event[[event_idx]][sample_idx] < min_time){
+#         Event[sample_idx] = event_idx
+#         min_time = time_event[[event_idx]][sample_idx]
+#       }
+#       Time[sample_idx] = min_time
+#     }
+#   }
+# 
+#   return(list(Time = Time,Event = Event))
+# }
+# sample_i(1,args)
 
 
 #pi(time = t, event = j)
 density_i = function(time,event,args,islog = FALSE){
-  res = numeric(length(density_i))
   for(event_idx in 1:event_num){
     if(event_idx == event){
       args[[event_idx]]$islog = TRUE
@@ -191,7 +138,9 @@ prob_i = function(lower,upper,event,args,islog = FALSE){
   if(islog){res = log(res)}
   return(res)
 }
-#P(time>=s, event = j)
+
+
+#P(time>=s)
 surv_i = function(lower,args,islog = FALSE){
   res = 0
   for(event_idx in 1:event_num){
